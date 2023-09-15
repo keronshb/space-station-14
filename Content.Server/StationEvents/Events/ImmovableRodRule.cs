@@ -2,8 +2,8 @@ using System.Numerics;
 using Content.Server.GameTicking.Rules.Components;
 using Content.Server.ImmovableRod;
 using Content.Server.StationEvents.Components;
-using Content.Server.Weapons.Ranged.Systems;
 using Content.Shared.Spawners.Components;
+using Content.Shared.Weapons.Ranged.Systems;
 using Robust.Shared.Prototypes;
 
 namespace Content.Server.StationEvents.Events;
@@ -11,7 +11,7 @@ namespace Content.Server.StationEvents.Events;
 public sealed class ImmovableRodRule : StationEventSystem<ImmovableRodRuleComponent>
 {
     [Dependency] private readonly SharedTransformSystem _transform = default!;
-    [Dependency] private readonly GunSystem _gun = default!;
+    [Dependency] private readonly SharedGunSystem _gun = default!;
     [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
 
     protected override void Started(EntityUid uid, ImmovableRodRuleComponent component, GameRuleComponent gameRule, GameRuleStartedEvent args)
