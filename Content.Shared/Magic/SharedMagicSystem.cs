@@ -21,6 +21,11 @@ using Robust.Shared.Serialization.Manager;
 
 namespace Content.Shared.Magic;
 
+// TODO: 1 fix fireball
+// TODO: 2 split spellbooks into their own ECS
+// TODO: 3 suffer when refactoring
+// TODO: MIND
+
 /// <summary>
 /// Handles learning and using spells (actions)
 /// </summary>
@@ -129,6 +134,7 @@ public abstract class SharedMagicSystem : EntitySystem
         args.Handled = true;
     }
 
+    // TODO: Fix fireball first
     private void OnProjectileSpell(ProjectileSpellEvent ev)
     {
         if (ev.Handled)

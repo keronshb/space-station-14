@@ -1,5 +1,6 @@
 ﻿namespace Content.Shared.Magic;
 
+// TODO: Move to magic component
 public interface ISpeakSpell // The speak n spell interface
 {
     /// <summary>
