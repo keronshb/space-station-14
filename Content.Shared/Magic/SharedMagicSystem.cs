@@ -39,7 +39,7 @@ public abstract class SharedMagicSystem : EntitySystem
     [Dependency] private readonly SharedDoAfterSystem _doAfter = default!;
     [Dependency] private readonly SharedGunSystem _gunSystem = default!;
     [Dependency] private readonly SharedPhysicsSystem _physics = default!;
-    [Dependency] private readonly SharedTransformSystem _transformSystem = default!;
+    [Dependency] private readonly SharedTransformSystem _transform = default!;
     [Dependency] private readonly SharedAudioSystem _audio = default!;
     [Dependency] private readonly SharedChatSystem _chat = default!;
 
@@ -135,6 +135,8 @@ public abstract class SharedMagicSystem : EntitySystem
     }
 
     // TODO: Fix fireball first
+    //  Multiple spawn issue is caused by prediction
+    // TODO: One way to fix multiple spawning issue is to check INetManager.IsServer
     private void OnProjectileSpell(ProjectileSpellEvent ev)
     {
         if (ev.Handled)
@@ -149,14 +151,14 @@ public abstract class SharedMagicSystem : EntitySystem
         foreach (var pos in GetSpawnPositions(xform, ev.Pos))
         {
             // If applicable, this ensures the projectile is parented to grid on spawn, instead of the map.
-            var mapPos = pos.ToMap(EntityManager);
+            var mapPos = pos.ToMap(EntityManager, _transform);
             var spawnCoords = _mapManager.TryFindGridAt(mapPos, out var gridUid, out _)
                 ? pos.WithEntityId(gridUid, EntityManager)
                 : new(_mapManager.GetMapEntityId(mapPos.MapId), mapPos.Position);
 
             var ent = Spawn(ev.Prototype, spawnCoords);
-            var direction = ev.Target.ToMapPos(EntityManager, _transformSystem) -
-                            spawnCoords.ToMapPos(EntityManager, _transformSystem);
+            var direction = ev.Target.ToMapPos(EntityManager, _transform) -
+                            spawnCoords.ToMapPos(EntityManager, _transform);
             _gunSystem.ShootProjectile(ent, direction, userVelocity, ev.Performer);
         }
     }
@@ -258,7 +260,7 @@ public abstract class SharedMagicSystem : EntitySystem
 
         if (transform.MapID != args.Target.GetMapId(EntityManager)) return;
 
-        _transformSystem.SetCoordinates(args.Performer, args.Target);
+        _transform.SetCoordinates(args.Performer, args.Target);
         transform.AttachToGridOrMap();
         _audio.PlayPvs(args.BlinkSound, args.Performer, AudioParams.Default.WithVolume(args.BlinkVolume));
         Speak(args);

@@ -18,7 +18,7 @@ public sealed partial class ProjectileSpellEvent : WorldTargetActionEvent, ISpea
     /// <summary>
     /// Gets the targeted spawn positions; may lead to multiple entities being spawned.
     /// </summary>
-    [DataField("posData")] public MagicSpawnData Pos = new TargetCasterPos();
+    [DataField("posData")] public MagicSpawnData Pos = new TargetInFront();
 
     // TODO: Move to magic component
     [DataField("speech")]
