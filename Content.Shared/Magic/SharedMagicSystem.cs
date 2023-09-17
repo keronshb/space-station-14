@@ -15,6 +15,7 @@ using Content.Shared.Storage;
 using Content.Shared.Weapons.Ranged.Systems;
 using Robust.Shared.Audio;
 using Robust.Shared.Map;
+using Robust.Shared.Network;
 using Robust.Shared.Physics.Systems;
 using Robust.Shared.Random;
 using Robust.Shared.Serialization.Manager;
@@ -42,6 +43,7 @@ public abstract class SharedMagicSystem : EntitySystem
     [Dependency] private readonly SharedTransformSystem _transform = default!;
     [Dependency] private readonly SharedAudioSystem _audio = default!;
     [Dependency] private readonly SharedChatSystem _chat = default!;
+    [Dependency] private readonly INetManager _net = default!;
 
     public override void Initialize()
     {
@@ -156,10 +158,13 @@ public abstract class SharedMagicSystem : EntitySystem
                 ? pos.WithEntityId(gridUid, EntityManager)
                 : new(_mapManager.GetMapEntityId(mapPos.MapId), mapPos.Position);
 
-            var ent = Spawn(ev.Prototype, spawnCoords);
-            var direction = ev.Target.ToMapPos(EntityManager, _transform) -
-                            spawnCoords.ToMapPos(EntityManager, _transform);
-            _gunSystem.ShootProjectile(ent, direction, userVelocity, ev.Performer);
+            if (_net.IsServer)
+            {
+                var ent = Spawn(ev.Prototype, spawnCoords);
+                var direction = ev.Target.ToMapPos(EntityManager, _transform) -
+                                spawnCoords.ToMapPos(EntityManager, _transform);
+                _gunSystem.ShootProjectile(ent, direction, userVelocity, ev.Performer);
+            }
         }
     }
 
@@ -308,13 +313,16 @@ public abstract class SharedMagicSystem : EntitySystem
         foreach (var proto in getProtos)
         {
             // TODO: Share this code with instant because they're both doing similar things for positioning.
-            var entity = Spawn(proto, offsetCoords);
-            offsetCoords = offsetCoords.Offset(offsetVector2);
-
-            if (lifetime != null)
+            if (_net.IsServer)
             {
-                var comp = EnsureComp<TimedDespawnComponent>(entity);
-                comp.Lifetime = lifetime.Value;
+                var entity = Spawn(proto, offsetCoords);
+                offsetCoords = offsetCoords.Offset(offsetVector2);
+
+                if (lifetime != null)
+                {
+                    var comp = EnsureComp<TimedDespawnComponent>(entity);
+                    comp.Lifetime = lifetime.Value;
+                }
             }
         }
     }
