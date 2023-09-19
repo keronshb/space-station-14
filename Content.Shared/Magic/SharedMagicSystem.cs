@@ -123,12 +123,15 @@ public abstract class SharedMagicSystem : EntitySystem
 
         foreach (var position in GetSpawnPositions(transform, args.Pos))
         {
-            var ent = Spawn(args.Prototype, position.SnapToGrid(EntityManager, _mapManager));
-
-            if (args.PreventCollideWithCaster)
+            if (_net.IsServer)
             {
-                var comp = EnsureComp<PreventCollideComponent>(ent);
-                comp.Uid = args.Performer;
+                var ent = Spawn(args.Prototype, position.SnapToGrid(EntityManager, _mapManager));
+
+                if (args.PreventCollideWithCaster)
+                {
+                    var comp = EnsureComp<PreventCollideComponent>(ent);
+                    comp.Uid = args.Performer;
+                }
             }
         }
 
@@ -200,6 +203,18 @@ public abstract class SharedMagicSystem : EntitySystem
         {
             case TargetCasterPos:
                 return new List<EntityCoordinates>(1) {casterXform.Coordinates};
+            case TargetInFrontSingle:
+            {
+                var directionPos = casterXform.Coordinates.Offset(casterXform.LocalRotation.ToWorldVec().Normalized());
+
+                if (!_mapManager.TryGetGrid(casterXform.GridUid, out var mapGrid))
+                    return new List<EntityCoordinates>();
+                if (!directionPos.TryGetTileRef(out var tileReference, EntityManager, _mapManager))
+                    return new List<EntityCoordinates>();
+
+                var tileIndex = tileReference.Value.GridIndices;
+                return new List<EntityCoordinates>(1) { mapGrid.GridTileToLocal(tileIndex) };
+            }
             case TargetInFront:
             {
                 // This is shit but you get the idea.

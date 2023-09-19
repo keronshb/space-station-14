@@ -16,5 +16,5 @@
       state: fireball
     event: !type:ProjectileSpellEvent
       prototype: ProjectileFireball
-      posData: !type:TargetInFront
+      posData: !type:TargetInFrontSingle
       speech: action-speech-spell-fireball

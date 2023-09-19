@@ -19,3 +19,7 @@ public sealed partial class TargetInFront : MagicSpawnData
 {
     [DataField("width")] public int Width = 3;
 }
+
+public sealed partial class TargetInFrontSingle : MagicSpawnData
+{
+}
