@@ -151,23 +151,23 @@ public abstract class SharedMagicSystem : EntitySystem
         Speak(ev);
 
         var xform = Transform(ev.Performer);
+        var fromCoords = xform.Coordinates;
+        var toCoords = ev.Target;
         var userVelocity = _physics.GetMapLinearVelocity(ev.Performer);
 
-        foreach (var pos in GetSpawnPositions(xform, ev.Pos))
-        {
-            // If applicable, this ensures the projectile is parented to grid on spawn, instead of the map.
-            var mapPos = pos.ToMap(EntityManager, _transform);
-            var spawnCoords = _mapManager.TryFindGridAt(mapPos, out var gridUid, out _)
-                ? pos.WithEntityId(gridUid, EntityManager)
-                : new(_mapManager.GetMapEntityId(mapPos.MapId), mapPos.Position);
+        // If applicable, this ensures the projectile is parented to grid on spawn, instead of the map.
+        var toMap = toCoords.ToMap(EntityManager, _transform);
+        var fromMap = fromCoords.ToMap(EntityManager, _transform);
+        var spawnCoords = _mapManager.TryFindGridAt(fromMap, out var gridUid, out _)
+            ? fromCoords.WithEntityId(gridUid, EntityManager)
+            : new(_mapManager.GetMapEntityId(fromMap.MapId), fromMap.Position);
 
-            if (_net.IsServer)
-            {
-                var ent = Spawn(ev.Prototype, spawnCoords);
-                var direction = ev.Target.ToMapPos(EntityManager, _transform) -
-                                spawnCoords.ToMapPos(EntityManager, _transform);
-                _gunSystem.ShootProjectile(ent, direction, userVelocity, ev.Performer);
-            }
+        if (_net.IsServer)
+        {
+            var ent = Spawn(ev.Prototype, spawnCoords);
+            var direction = toCoords.ToMapPos(EntityManager, _transform) -
+                            spawnCoords.ToMapPos(EntityManager, _transform);
+            _gunSystem.ShootProjectile(ent, direction, userVelocity, ev.Performer, ev.Performer);
         }
     }
 
