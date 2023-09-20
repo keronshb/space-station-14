@@ -268,8 +268,7 @@ public abstract class SharedMagicSystem : EntitySystem
         }
     }
 
-    // TODO: Error: Tried to play audio source outside of prediction
-    // TODO: Swap transform.AttachToGridOrMap to system method
+    // TODO: should probably add better validation that the clicked location is on the users screen somewhere,
     /// <summary>
     /// Teleports the user to the clicked location
     /// </summary>
@@ -281,11 +280,11 @@ public abstract class SharedMagicSystem : EntitySystem
 
         var transform = Transform(args.Performer);
 
-        if (transform.MapID != args.Target.GetMapId(EntityManager)) return;
+        if (transform.MapID != args.Target.GetMapId(EntityManager))
+            return;
 
         _transform.SetCoordinates(args.Performer, args.Target);
-        transform.AttachToGridOrMap();
-        _audio.PlayPvs(args.BlinkSound, args.Performer, AudioParams.Default.WithVolume(args.BlinkVolume));
+        _transform.AttachToGridOrMap(args.Performer, transform);
         Speak(args);
         args.Handled = true;
     }
