@@ -10,6 +10,8 @@ public sealed partial class TeleportSpellEvent : WorldTargetActionEvent, ISpeakS
     public string? Speech { get; private set; }
 
     // TODO: Move to magic component
+    // TODO: Maybe not since sound specifier is a thing
+    // Keep here to remind what the volume was set as
     /// <summary>
     /// Volume control for the spell.
     /// </summary>

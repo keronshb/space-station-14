@@ -198,12 +198,15 @@ public abstract class SharedMagicSystem : EntitySystem
         }
     }
 
+    // TODO: Rework this somehow & COMMENT
     private List<EntityCoordinates> GetSpawnPositions(TransformComponent casterXform, MagicSpawnData data)
     {
         switch (data)
         {
+            // TODO: Rename to TargetUnderCaster
             case TargetCasterPos:
                 return new List<EntityCoordinates>(1) {casterXform.Coordinates};
+            // TODO: Rename to TargetInFront
             case TargetInFrontSingle:
             {
                 var directionPos = casterXform.Coordinates.Offset(casterXform.LocalRotation.ToWorldVec().Normalized());
@@ -216,6 +219,7 @@ public abstract class SharedMagicSystem : EntitySystem
                 var tileIndex = tileReference.Value.GridIndices;
                 return new List<EntityCoordinates>(1) { mapGrid.GridTileToLocal(tileIndex) };
             }
+            // TODO: Rename to TargetLineInFront
             case TargetInFront:
             {
                 // This is shit but you get the idea.
@@ -282,6 +286,8 @@ public abstract class SharedMagicSystem : EntitySystem
 
         if (transform.MapID != args.Target.GetMapId(EntityManager))
             return;
+
+        // TODO: xform query
 
         _transform.SetCoordinates(args.Performer, args.Target);
         _transform.AttachToGridOrMap(args.Performer, transform);
