@@ -5,6 +5,8 @@ using Content.Shared.Body.Systems;
 using Content.Shared.Chat;
 using Content.Shared.Coordinates.Helpers;
 using Content.Shared.DoAfter;
+using Content.Shared.Doors.Components;
+using Content.Shared.Doors.Systems;
 using Content.Shared.Interaction.Events;
 using Content.Shared.Magic.Components;
 using Content.Shared.Magic.Events;
@@ -40,10 +42,11 @@ public abstract class SharedMagicSystem : EntitySystem
     [Dependency] private readonly SharedGunSystem _gunSystem = default!;
     [Dependency] private readonly SharedPhysicsSystem _physics = default!;
     [Dependency] private readonly SharedTransformSystem _transform = default!;
-    [Dependency] private readonly SharedAudioSystem _audio = default!;
     [Dependency] private readonly SharedChatSystem _chat = default!;
     [Dependency] private readonly INetManager _net = default!;
     [Dependency] private readonly SharedBodySystem _bodySystem = default!;
+    [Dependency] private readonly EntityLookupSystem _lookup = default!;
+    [Dependency] private readonly SharedDoorSystem _doorSystem = default!;
 
     public override void Initialize()
     {
@@ -66,6 +69,7 @@ public abstract class SharedMagicSystem : EntitySystem
         SubscribeLocalEvent<ProjectileSpellEvent>(OnProjectileSpell);
         SubscribeLocalEvent<ChangeComponentsSpellEvent>(OnChangeComponentsSpell);
         SubscribeLocalEvent<SmiteSpellEvent>(OnSmiteSpell);
+        SubscribeLocalEvent<KnockSpellEvent>(OnKnockSpell);
     }
 
     private void OnDoAfter(EntityUid uid, SpellbookComponent component, DoAfterEvent args)
@@ -368,8 +372,37 @@ public abstract class SharedMagicSystem : EntitySystem
         _bodySystem.GibBody(ev.Target, true, body);
     }
 
+    /// <summary>
+    /// Opens all doors within range
+    /// </summary>
+    /// <param name="args"></param>
+    private void OnKnockSpell(KnockSpellEvent args)
+    {
+        if (args.Handled)
+            return;
+
+        args.Handled = true;
+        Speak(args);
+
+        //Get the position of the player
+        var transform = Transform(args.Performer);
+        var coords = transform.Coordinates;
+
+        // TODO: Can probably use in range for teleport spells as well
+        // Look for doors and don't open them if they're already open.
+        // Magic doesn't respect locks, it just opens
+        foreach (var entity in _lookup.GetEntitiesInRange(coords, args.Range))
+        {
+            // TODO: See about unlocking lockers too
+
+            if (TryComp<DoorComponent>(entity, out var doorComp) && doorComp.State is not DoorState.Open)
+                _doorSystem.StartOpening(entity);
+        }
+    }
+
     #endregion
 
+    // TODO: Refactor into an event
     protected void Speak(BaseActionEvent args)
     {
         /*if (args is not ISpeakSpell speak || string.IsNullOrWhiteSpace(speak.Speech))
