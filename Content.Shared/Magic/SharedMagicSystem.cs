@@ -22,7 +22,6 @@ using Robust.Shared.Serialization.Manager;
 
 namespace Content.Shared.Magic;
 
-// TODO: 1 fix fireball
 // TODO: 2 split spellbooks into their own ECS
 // TODO: 3 suffer when refactoring
 // TODO: MIND
@@ -44,6 +43,7 @@ public abstract class SharedMagicSystem : EntitySystem
     [Dependency] private readonly SharedAudioSystem _audio = default!;
     [Dependency] private readonly SharedChatSystem _chat = default!;
     [Dependency] private readonly INetManager _net = default!;
+    [Dependency] private readonly SharedBodySystem _bodySystem = default!;
 
     public override void Initialize()
     {
@@ -55,6 +55,7 @@ public abstract class SharedMagicSystem : EntitySystem
         SubscribeLocalEvent<SpellbookComponent, UseInHandEvent>(OnUse);
         SubscribeLocalEvent<SpellbookComponent, SpellbookDoAfterEvent>(OnDoAfter);
 
+        // TODO: Network spells
         // TODO: Make Magic Comp/Magic Caster Comp
         // TODO: Upgradeable spells
         // TODO: More spells
@@ -64,6 +65,7 @@ public abstract class SharedMagicSystem : EntitySystem
         SubscribeLocalEvent<WorldSpawnSpellEvent>(OnWorldSpawn);
         SubscribeLocalEvent<ProjectileSpellEvent>(OnProjectileSpell);
         SubscribeLocalEvent<ChangeComponentsSpellEvent>(OnChangeComponentsSpell);
+        SubscribeLocalEvent<SmiteSpellEvent>(OnSmiteSpell);
     }
 
     private void OnDoAfter(EntityUid uid, SpellbookComponent component, DoAfterEvent args)
@@ -139,9 +141,7 @@ public abstract class SharedMagicSystem : EntitySystem
         args.Handled = true;
     }
 
-    // TODO: Fix fireball first
-    //  Multiple spawn issue is caused by prediction
-    // TODO: One way to fix multiple spawning issue is to check INetManager.IsServer
+    // TODO: Deduplicate copied gun code
     private void OnProjectileSpell(ProjectileSpellEvent ev)
     {
         if (ev.Handled)
@@ -171,6 +171,7 @@ public abstract class SharedMagicSystem : EntitySystem
         }
     }
 
+    // TODO: See what this is used for and try to swap out component.Owner
     private void OnChangeComponentsSpell(ChangeComponentsSpellEvent ev)
     {
         if (ev.Handled)
@@ -267,6 +268,8 @@ public abstract class SharedMagicSystem : EntitySystem
         }
     }
 
+    // TODO: Error: Tried to play audio source outside of prediction
+    // TODO: Swap transform.AttachToGridOrMap to system method
     /// <summary>
     /// Teleports the user to the clicked location
     /// </summary>
@@ -306,7 +309,6 @@ public abstract class SharedMagicSystem : EntitySystem
         args.Handled = true;
     }
 
-    // TODO: somehow 30 magicarp spawned.
     // TODO: Try to get off of Prototypes?
     /// <summary>
     /// Loops through a supplied list of entity prototypes and spawns them
@@ -340,6 +342,25 @@ public abstract class SharedMagicSystem : EntitySystem
                 }
             }
         }
+    }
+
+    private void OnSmiteSpell(SmiteSpellEvent ev)
+    {
+        if (ev.Handled)
+            return;
+
+        ev.Handled = true;
+        Speak(ev);
+
+        var direction = Transform(ev.Target).MapPosition.Position - Transform(ev.Performer).MapPosition.Position;
+        var impulseVector = direction * 10000;
+
+        _physics.ApplyLinearImpulse(ev.Target, impulseVector);
+
+        if (!TryComp<BodyComponent>(ev.Target, out var body))
+            return;
+
+        _bodySystem.GibBody(ev.Target, true, body);
     }
 
     #endregion

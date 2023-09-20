@@ -16,51 +16,15 @@ namespace Content.Server.Magic;
 public sealed class MagicSystem : SharedMagicSystem
 {
     [Dependency] private readonly SharedAudioSystem _audio = default!;
-    [Dependency] private readonly SharedPhysicsSystem _physics = default!;
     [Dependency] private readonly EntityLookupSystem _lookup = default!;
     [Dependency] private readonly DoorBoltSystem _boltsSystem = default!;
     [Dependency] private readonly SharedDoorSystem _doorSystem = default!;
-    [Dependency] private readonly SharedBodySystem _bodySystem = default!;
     [Dependency] private readonly ChatSystem _chat = default!;
 
     public override void Initialize()
     {
         base.Initialize();
-        SubscribeLocalEvent<SmiteSpellEvent>(OnSmiteSpell);
         SubscribeLocalEvent<KnockSpellEvent>(OnKnockSpell);
-    }
-
-    private void OnSmiteSpell(SmiteSpellEvent ev)
-    {
-        if (ev.Handled)
-            return;
-
-        ev.Handled = true;
-        Speak(ev);
-
-        var direction = Transform(ev.Target).MapPosition.Position - Transform(ev.Performer).MapPosition.Position;
-        var impulseVector = direction * 10000;
-
-        _physics.ApplyLinearImpulse(ev.Target, impulseVector);
-
-        if (!TryComp<BodyComponent>(ev.Target, out var body))
-            return;
-
-        var ents = _bodySystem.GibBody(ev.Target, true, body);
-
-        if (!ev.DeleteNonBrainParts)
-            return;
-
-        // TODO: One of the following:
-        //       Move BrainComp to shared
-        //       Make a method in gib to leave the brain
-        //       Make dusting so this is actually Smite
-        foreach (var part in ents)
-        {
-            // just leaves a brain and clothes
-            if (HasComp<BodyComponent>(part) && !HasComp<BrainComponent>(part))
-                QueueDel(part);
-        }
     }
 
     /// <summary>
