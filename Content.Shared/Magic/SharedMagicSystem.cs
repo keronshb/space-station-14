@@ -89,7 +89,7 @@ public abstract class SharedMagicSystem : EntitySystem
         foreach (var (id, charges) in component.SpellActions)
         {
             EntityUid? actionId = null;
-            if (_actionsSystem.AddAction(uid, ref actionId, id))
+            if (_actionsSystem.AddAction(args.Args.User, ref actionId, id))
                 _actionsSystem.SetCharges(actionId, charges < 0 ? null : charges);
         }
 
@@ -98,7 +98,7 @@ public abstract class SharedMagicSystem : EntitySystem
 
     private void OnInit(EntityUid uid, SpellbookComponent component, MapInitEvent args)
     {
-        if (!component.LearnPermanently)
+        if (component.LearnPermanently)
             return;
 
         foreach (var (id, charges) in component.SpellActions)
