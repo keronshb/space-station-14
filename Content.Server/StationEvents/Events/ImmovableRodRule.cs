@@ -2,9 +2,10 @@ using System.Numerics;
 using Content.Server.GameTicking.Rules.Components;
 using Content.Server.ImmovableRod;
 using Content.Server.StationEvents.Components;
-using Content.Shared.Spawners.Components;
-using Content.Shared.Weapons.Ranged.Systems;
+using Content.Server.Weapons.Ranged.Systems;
+using Robust.Shared.Spawners;
 using Robust.Shared.Prototypes;
+using TimedDespawnComponent = Robust.Shared.Spawners.TimedDespawnComponent;
 
 namespace Content.Server.StationEvents.Events;
 
