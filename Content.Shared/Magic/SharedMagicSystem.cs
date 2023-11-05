@@ -86,29 +86,8 @@ public abstract class SharedMagicSystem : EntitySystem
             return;
         }
 
-        // TODO: Works but transfers all actions when not needed & does double work
-        /*foreach (var (id, charges) in component.SpellActions)
-        {
-            EntityUid? actionId = null;
-            if (_actionsSystem.AddAction(args.Args.User, ref actionId, id))
-                _actionsSystem.SetCharges(actionId, charges < 0 ? null : charges);
-
-            if (_mind.TryGetMind(args.Args.User, out var mindId, out _))
-            {
-                TryComp<ActionsContainerComponent>(args.Args.User, out var bookAcCon);
-                TryComp<ActionsContainerComponent>(mindId, out var mindAcCom);
-
-                _actionContainer.TransferAllActions(args.Args.User, mindId, bookAcCon, mindAcCom);
-            }
-        }*/
-
         if (_mind.TryGetMind(args.Args.User, out var mindId, out _))
-        {
-            TryComp<ActionsContainerComponent>(uid, out var bookAcCon);
-            TryComp<ActionsContainerComponent>(mindId, out var mindAcCom);
-
-            _actionContainer.TransferAllActionsWithNewAttached(uid, mindId, args.Args.User, bookAcCon, mindAcCom);
-        }
+            _actionContainer.TransferAllActionsWithNewAttached(uid, mindId, args.Args.User);
         else
         {
             foreach (var (id, charges) in component.SpellActions)

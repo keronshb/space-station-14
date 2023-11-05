@@ -39,6 +39,7 @@ public sealed class ActionContainerSystem : EntitySystem
         if(!_mind.TryGetMind(uid, out var mindId, out _))
             return;
 
+        // May not start with an action, so init here.
         EnsureComp<ActionsContainerComponent>(mindId);
 
         if (!TryComp<ActionsContainerComponent>(mindId, out var mindActionContainerComp))
