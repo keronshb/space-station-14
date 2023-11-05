@@ -387,7 +387,7 @@ public abstract partial class SharedGunSystem : EntitySystem
         if (user != null)
         {
             var projectile = EnsureComp<ProjectileComponent>(uid);
-            Projectiles.SetShooter(projectile, user.Value);
+            Projectiles.SetShooter(uid, projectile, user.Value);
             projectile.Weapon = gunUid;
         }
 

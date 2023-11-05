@@ -84,6 +84,7 @@
     layers:
     - state: bookfireball
   - type: Spellbook
+    learnPermanently: true
     spells:
       ActionFireball: -1
 

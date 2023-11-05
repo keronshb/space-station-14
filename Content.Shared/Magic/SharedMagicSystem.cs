@@ -11,6 +11,7 @@ using Content.Shared.Interaction.Events;
 using Content.Shared.Magic.Components;
 using Content.Shared.Magic.Events;
 using Content.Shared.Maps;
+using Content.Shared.Mind;
 using Content.Shared.Physics;
 using Content.Shared.Storage;
 using Content.Shared.Weapons.Ranged.Systems;
@@ -25,7 +26,6 @@ namespace Content.Shared.Magic;
 
 // TODO: 2 split spellbooks into their own ECS
 // TODO: 3 suffer when refactoring
-// TODO: MIND
 
 /// <summary>
 /// Handles learning and using spells (actions)
@@ -47,6 +47,7 @@ public abstract class SharedMagicSystem : EntitySystem
     [Dependency] private readonly SharedBodySystem _bodySystem = default!;
     [Dependency] private readonly EntityLookupSystem _lookup = default!;
     [Dependency] private readonly SharedDoorSystem _doorSystem = default!;
+    [Dependency] private readonly SharedMindSystem _mind = default!;
 
     public override void Initialize()
     {
@@ -85,11 +86,37 @@ public abstract class SharedMagicSystem : EntitySystem
             return;
         }
 
-        foreach (var (id, charges) in component.SpellActions)
+        // TODO: Works but transfers all actions when not needed & does double work
+        /*foreach (var (id, charges) in component.SpellActions)
         {
             EntityUid? actionId = null;
             if (_actionsSystem.AddAction(args.Args.User, ref actionId, id))
                 _actionsSystem.SetCharges(actionId, charges < 0 ? null : charges);
+
+            if (_mind.TryGetMind(args.Args.User, out var mindId, out _))
+            {
+                TryComp<ActionsContainerComponent>(args.Args.User, out var bookAcCon);
+                TryComp<ActionsContainerComponent>(mindId, out var mindAcCom);
+
+                _actionContainer.TransferAllActions(args.Args.User, mindId, bookAcCon, mindAcCom);
+            }
+        }*/
+
+        if (_mind.TryGetMind(args.Args.User, out var mindId, out _))
+        {
+            TryComp<ActionsContainerComponent>(uid, out var bookAcCon);
+            TryComp<ActionsContainerComponent>(mindId, out var mindAcCom);
+
+            _actionContainer.TransferAllActionsWithNewAttached(uid, mindId, args.Args.User, bookAcCon, mindAcCom);
+        }
+        else
+        {
+            foreach (var (id, charges) in component.SpellActions)
+            {
+                EntityUid? actionId = null;
+                if (_actionsSystem.AddAction(args.Args.User, ref actionId, id))
+                    _actionsSystem.SetCharges(actionId, charges < 0 ? null : charges);
+            }
         }
 
         component.SpellActions.Clear();
@@ -97,9 +124,6 @@ public abstract class SharedMagicSystem : EntitySystem
 
     private void OnInit(EntityUid uid, SpellbookComponent component, MapInitEvent args)
     {
-        if (component.LearnPermanently)
-            return;
-
         foreach (var (id, charges) in component.SpellActions)
         {
             var spell = _actionContainer.AddAction(uid, id);

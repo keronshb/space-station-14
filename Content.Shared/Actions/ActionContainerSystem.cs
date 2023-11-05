@@ -39,6 +39,8 @@ public sealed class ActionContainerSystem : EntitySystem
         if(!_mind.TryGetMind(uid, out var mindId, out _))
             return;
 
+        EnsureComp<ActionsContainerComponent>(mindId);
+
         if (!TryComp<ActionsContainerComponent>(mindId, out var mindActionContainerComp))
             return;
 
@@ -152,11 +154,43 @@ public sealed class ActionContainerSystem : EntitySystem
     }
 
     /// <summary>
+    /// Transfers all actions from one container to another, while changing the attached entity.
+    /// </summary>
+    /// <remarks>
+    /// This will actually remove and then re-grant the action.
+    /// Useful where you need to transfer from one container to another but also change the attached entity (ie spellbook > mind > user)
+    /// </remarks>
+    public void TransferActionWithNewAttached(
+        EntityUid actionId,
+        EntityUid newContainer,
+        EntityUid newAttached,
+        BaseActionComponent? action = null,
+        ActionsContainerComponent? container = null)
+    {
+        if (!_actions.ResolveActionData(actionId, ref action))
+            return;
+
+        if (action.Container == newContainer)
+            return;
+
+        var attached = newAttached;
+        if (!AddAction(newContainer, actionId, action, container))
+            return;
+
+        DebugTools.AssertEqual(action.Container, newContainer);
+        DebugTools.AssertNull(action.AttachedEntity);
+
+        _actions.AddActionDirect(newAttached, actionId, action: action);
+
+        DebugTools.AssertEqual(action.AttachedEntity, attached);
+    }
+
+    /// <summary>
     /// Transfers all actions from one container to another, while keeping the attached entity the same.
     /// </summary>
-    /// &lt;remarks&gt;
+    /// <remarks>
     /// While the attached entity should be the same at the end, this will actually remove and then re-grant the action.
-    /// &lt;/remarks&gt;
+    /// </remarks>
     public void TransferAllActions(
         EntityUid from,
         EntityUid to,
@@ -169,6 +203,31 @@ public sealed class ActionContainerSystem : EntitySystem
         foreach (var action in oldContainer.Container.ContainedEntities.ToArray())
         {
             TransferAction(action, to, container: newContainer);
+        }
+
+        DebugTools.AssertEqual(oldContainer.Container.Count, 0);
+    }
+
+    /// <summary>
+    /// Transfers all actions from one container to another, while changing the attached entity.
+    /// </summary>
+    /// <remarks>
+    /// This will actually remove and then re-grant the action.
+    /// Useful where you need to transfer from one container to another but also change the attached entity (ie spellbook > mind > user)
+    /// </remarks>
+    public void TransferAllActionsWithNewAttached(
+        EntityUid from,
+        EntityUid to,
+        EntityUid newAttached,
+        ActionsContainerComponent? oldContainer = null,
+        ActionsContainerComponent? newContainer = null)
+    {
+        if (!Resolve(from, ref oldContainer) || !Resolve(to, ref newContainer))
+            return;
+
+        foreach (var action in oldContainer.Container.ContainedEntities.ToArray())
+        {
+            TransferActionWithNewAttached(action, to, newAttached, container: newContainer);
         }
 
         DebugTools.AssertEqual(oldContainer.Container.Count, 0);
@@ -265,10 +324,11 @@ public sealed class ActionContainerSystem : EntitySystem
         if (args.Container.ID != ActionsContainerComponent.ContainerId)
             return;
 
+        // TODO: Remove
         // Actions should only be getting removed while terminating or moving outside of PVS range.
-        DebugTools.Assert(Terminating(args.Entity)
+        /*DebugTools.Assert(Terminating(args.Entity)
                           || _netMan.IsServer // I love gibbing code
-                          || _timing.ApplyingState);
+                          || _timing.ApplyingState);*/
 
         if (!_actions.TryGetActionData(args.Entity, out var data, false))
             return;
