@@ -70,6 +70,16 @@ public abstract partial class BaseActionComponent : Component
     [DataField("charges")] public int? Charges;
 
     /// <summary>
+    /// How many times can this action be used before <see cref="UseDelay"/> is activated?
+    /// </summary>
+    [DataField("usesBeforeDelay")] public int UsesBeforeDelay = 1;
+
+    /// <summary>
+    /// The current uses on the action
+    /// </summary>
+    public int Uses;
+
+    /// <summary>
     /// The entity that contains this action. If the action is innate, this may be the user themselves.
     /// This should almost always be non-null.
     /// </summary>

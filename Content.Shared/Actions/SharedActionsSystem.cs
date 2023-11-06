@@ -183,6 +183,27 @@ public abstract class SharedActionsSystem : EntitySystem
         Dirty(actionId.Value, action);
     }
 
+    public int? GetCharges(EntityUid? actionId)
+    {
+        if (!TryGetActionData(actionId, out var action))
+            return null;
+
+        return action.Charges;
+    }
+
+    public void SetUseDelay(EntityUid? actionId, TimeSpan? delay)
+    {
+        if (!TryGetActionData(actionId, out var action) ||
+            action.UseDelay == delay)
+        {
+            return;
+        }
+
+        action.UseDelay = delay;
+        UpdateAction(actionId, action);
+        Dirty(actionId.Value, action);
+    }
+
     private void OnActionsGetState(EntityUid uid, ActionsComponent component, ref ComponentGetState args)
     {
         args.State = new ActionsComponentState(GetNetEntitySet(component.Actions));
@@ -406,6 +427,17 @@ public abstract class SharedActionsSystem : EntitySystem
             if (action.Charges == 0)
                 action.Enabled = false;
         }
+
+        // TODO: action.Uses and action.UseBeforeDelay logic
+        // if action.UseDelay != null && action.Uses < 1
+        //  then activate cooldown
+
+        // TODO: Will need to only increment during cooldown OR reset to max uses after cooldown
+        // if action.Uses < 1 && action.Uses <= action.UsesBeforeDelay
+        //  uses++ (ideally after cooldown)
+
+        // if action.Uses > 0
+        //  uses--
 
         action.Cooldown = null;
         if (action.UseDelay != null)

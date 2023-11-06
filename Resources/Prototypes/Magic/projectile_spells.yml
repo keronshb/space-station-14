@@ -4,6 +4,8 @@
   description: Fires an explosive fireball towards the clicked location.
   noSpawn: true
   components:
+  - type: Magic
+    cooldown: 5
   - type: WorldTargetAction
     useDelay: 30
     itemIconStyle: BigAction

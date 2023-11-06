@@ -36,7 +36,7 @@ public abstract class SharedMagicSystem : EntitySystem
     [Dependency] private readonly IComponentFactory _compFact = default!;
     [Dependency] private readonly IMapManager _mapManager = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
-    [Dependency] private readonly SharedActionsSystem _actionsSystem = default!;
+    [Dependency] private readonly SharedActionsSystem _actions = default!;
     [Dependency] private readonly ActionContainerSystem _actionContainer = default!;
     [Dependency] private readonly SharedDoAfterSystem _doAfter = default!;
     [Dependency] private readonly SharedGunSystem _gunSystem = default!;
@@ -52,18 +52,11 @@ public abstract class SharedMagicSystem : EntitySystem
     public override void Initialize()
     {
         base.Initialize();
-
-        // TODO: Move Spellbooks into their own system
-        // TODO: Make Master Spellbook (pointbuy)
-        SubscribeLocalEvent<SpellbookComponent, MapInitEvent>(OnInit);
-        SubscribeLocalEvent<SpellbookComponent, UseInHandEvent>(OnUse);
-        SubscribeLocalEvent<SpellbookComponent, SpellbookDoAfterEvent>(OnDoAfter);
-
-        // TODO: Network spells
         // TODO: Make Magic Comp/Magic Caster Comp
+        SubscribeLocalEvent<MagicComponent, MapInitEvent>(OnInit, after: new []{typeof(SharedSpellbookSystem)});
         // TODO: Upgradeable spells
+
         // TODO: More spells
-        // TODO: Save Spells to mind
         SubscribeLocalEvent<InstantSpawnSpellEvent>(OnInstantSpawn);
         SubscribeLocalEvent<TeleportSpellEvent>(OnTeleportSpell);
         SubscribeLocalEvent<WorldSpawnSpellEvent>(OnWorldSpawn);
@@ -73,68 +66,11 @@ public abstract class SharedMagicSystem : EntitySystem
         SubscribeLocalEvent<KnockSpellEvent>(OnKnockSpell);
     }
 
-    private void OnDoAfter(EntityUid uid, SpellbookComponent component, DoAfterEvent args)
+    private void OnInit(EntityUid uid, MagicComponent component, MapInitEvent args)
     {
-        if (args.Handled || args.Cancelled)
-            return;
-
-        args.Handled = true;
-
-        if (!component.LearnPermanently)
-        {
-            _actionsSystem.GrantActions(args.Args.User, component.Spells, uid);
-            return;
-        }
-
-        if (_mind.TryGetMind(args.Args.User, out var mindId, out _))
-            _actionContainer.TransferAllActionsWithNewAttached(uid, mindId, args.Args.User);
-        else
-        {
-            foreach (var (id, charges) in component.SpellActions)
-            {
-                EntityUid? actionId = null;
-                if (_actionsSystem.AddAction(args.Args.User, ref actionId, id))
-                    _actionsSystem.SetCharges(actionId, charges < 0 ? null : charges);
-            }
-        }
-
-        component.SpellActions.Clear();
-    }
-
-    private void OnInit(EntityUid uid, SpellbookComponent component, MapInitEvent args)
-    {
-        foreach (var (id, charges) in component.SpellActions)
-        {
-            var spell = _actionContainer.AddAction(uid, id);
-            if (spell == null)
-                continue;
-
-            _actionsSystem.SetCharges(spell, charges < 0 ? null : charges);
-            component.Spells.Add(spell.Value);
-        }
-    }
-
-    private void OnUse(EntityUid uid, SpellbookComponent component, UseInHandEvent args)
-    {
-        if (args.Handled)
-            return;
-
-        AttemptLearn(uid, component, args);
-
-        args.Handled = true;
-    }
-
-    private void AttemptLearn(EntityUid uid, SpellbookComponent component, UseInHandEvent args)
-    {
-        var doAfterEventArgs = new DoAfterArgs(EntityManager, args.User, component.LearnTime, new SpellbookDoAfterEvent(), uid, target: uid)
-        {
-            BreakOnTargetMove = true,
-            BreakOnUserMove = true,
-            BreakOnDamage = true,
-            NeedHand = true //What, are you going to read with your eyes only??
-        };
-
-        _doAfter.TryStartDoAfter(doAfterEventArgs);
+        // TODO: Remove set charges for a "Set Uses" (before cooldown)
+        _actions.SetUseDelay(uid, component.Cooldown);
+        _actions.SetCharges(uid, 2);
     }
 
     #region Spells
@@ -425,6 +361,7 @@ public abstract class SharedMagicSystem : EntitySystem
     #endregion
 
     // TODO: Refactor into an event
+    // When any spell is cast it will raise this as an event, so then it can be played in server or something. At least until chat gets moved to shared
     protected void Speak(BaseActionEvent args)
     {
         /*if (args is not ISpeakSpell speak || string.IsNullOrWhiteSpace(speak.Speech))
