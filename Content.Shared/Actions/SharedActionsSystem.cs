@@ -191,6 +191,16 @@ public abstract class SharedActionsSystem : EntitySystem
         return action.Charges;
     }
 
+    public void SetUsesBeforeDelay(EntityUid? actionId, int usesBeforeDelay)
+    {
+        if (!TryGetActionData(actionId, out var action) || action.UsesBeforeDelay == usesBeforeDelay)
+            return;
+
+        action.UsesBeforeDelay = usesBeforeDelay;
+        UpdateAction(actionId, action);
+        Dirty(actionId.Value, action);
+    }
+
     public void SetUseDelay(EntityUid? actionId, TimeSpan? delay)
     {
         if (!TryGetActionData(actionId, out var action) ||
@@ -249,6 +259,9 @@ public abstract class SharedActionsSystem : EntitySystem
         var curTime = GameTiming.CurTime;
         if (action.Cooldown.HasValue && action.Cooldown.Value.End > curTime)
             return;
+
+        if (action.RemainingUses < 1)
+            action.RemainingUses = action.UsesBeforeDelay;
 
         BaseActionEvent? performEvent = null;
 
@@ -425,22 +438,20 @@ public abstract class SharedActionsSystem : EntitySystem
             dirty = true;
             action.Charges--;
             if (action.Charges == 0)
+            {
                 action.Enabled = false;
+                action.RemainingUses = 0;
+            }
         }
 
-        // TODO: action.Uses and action.UseBeforeDelay logic
-        // if action.UseDelay != null && action.Uses < 1
-        //  then activate cooldown
-
-        // TODO: Will need to only increment during cooldown OR reset to max uses after cooldown
-        // if action.Uses < 1 && action.Uses <= action.UsesBeforeDelay
-        //  uses++ (ideally after cooldown)
-
-        // if action.Uses > 0
-        //  uses--
+        if (action.RemainingUses > 0)
+        {
+            dirty = true;
+            action.RemainingUses--;
+        }
 
         action.Cooldown = null;
-        if (action.UseDelay != null)
+        if (action.UseDelay != null && action.RemainingUses < 1)
         {
             dirty = true;
             action.Cooldown = (curTime, curTime + action.UseDelay.Value);

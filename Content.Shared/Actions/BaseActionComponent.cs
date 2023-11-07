@@ -75,9 +75,9 @@ public abstract partial class BaseActionComponent : Component
     [DataField("usesBeforeDelay")] public int UsesBeforeDelay = 1;
 
     /// <summary>
-    /// The current uses on the action
+    /// The current uses left on the action
     /// </summary>
-    public int Uses;
+    public int RemainingUses;
 
     /// <summary>
     /// The entity that contains this action. If the action is innate, this may be the user themselves.
@@ -169,6 +169,8 @@ public abstract class BaseActionComponentState : ComponentState
     public (TimeSpan Start, TimeSpan End)? Cooldown;
     public TimeSpan? UseDelay;
     public int? Charges;
+    public int RemainingUses;
+    public int UsesBeforeDelay;
     public NetEntity? Container;
     public NetEntity? EntityIcon;
     public bool CheckCanInteract;
@@ -196,6 +198,8 @@ public abstract class BaseActionComponentState : ComponentState
         Cooldown = component.Cooldown;
         UseDelay = component.UseDelay;
         Charges = component.Charges;
+        RemainingUses = component.RemainingUses;
+        UsesBeforeDelay = component.UsesBeforeDelay;
         CheckCanInteract = component.CheckCanInteract;
         ClientExclusive = component.ClientExclusive;
         Priority = component.Priority;

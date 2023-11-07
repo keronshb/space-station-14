@@ -6,12 +6,14 @@
   components:
   - type: Magic
     cooldown: 5
+    uses: 6
   - type: WorldTargetAction
     useDelay: 30
     itemIconStyle: BigAction
     checkCanAccess: false
     raiseOnUser: true
     range: 60
+    usesBeforeDelay: 3
     sound: !type:SoundPathSpecifier
       path: /Audio/Magic/fireball.ogg
     icon:

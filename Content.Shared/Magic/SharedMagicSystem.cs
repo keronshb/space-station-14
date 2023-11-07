@@ -68,9 +68,8 @@ public abstract class SharedMagicSystem : EntitySystem
 
     private void OnInit(EntityUid uid, MagicComponent component, MapInitEvent args)
     {
-        // TODO: Remove set charges for a "Set Uses" (before cooldown)
         _actions.SetUseDelay(uid, component.Cooldown);
-        _actions.SetCharges(uid, 2);
+        _actions.SetUsesBeforeDelay(uid, component.Uses);
     }
 
     #region Spells

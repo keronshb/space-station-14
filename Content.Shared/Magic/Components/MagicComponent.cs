@@ -19,7 +19,13 @@ public sealed partial class MagicComponent : Component
     /// How long until the spell can be cast again?
     /// </summary>
     [DataField("cooldown")]
-    public TimeSpan? Cooldown { get; private set; }
+    public TimeSpan? Cooldown;
+
+    /// <summary>
+    /// How many times can the spell be used before <see cref="Cooldown"/>?
+    /// </summary>
+    [DataField("uses")]
+    public int Uses = 1;
 
     // Vars set here will override action settings
 
