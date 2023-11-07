@@ -15,6 +15,7 @@ public sealed partial class MagicComponent : Component
     /// </summary>
     public string? Speech { get; private set; }
 
+    // Vars set here will override action settings
     /// <summary>
     /// How long until the spell can be cast again?
     /// </summary>
@@ -26,14 +27,6 @@ public sealed partial class MagicComponent : Component
     /// </summary>
     [DataField("uses")]
     public int Uses = 1;
-
-    // Vars set here will override action settings
-
-    // TODO: Cooldown set
-    // Will override useDelay on action
-
-    // TODO: Charge set
-    // TODO: Base Action Component needs a separate Charges field (Uses?)
 
     // TODO: Doafter required (ie chanting spell)
     //  Move while casting allowed
