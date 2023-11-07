@@ -66,11 +66,13 @@ public abstract partial class BaseActionComponent : Component
     /// <summary>
     ///     Convenience tool for actions with limited number of charges. Automatically decremented on use, and the
     ///     action is disabled when it reaches zero. Does NOT automatically remove the action from the action bar.
+    ///     To have a number of times to use an action in a row see <see cref="UsesBeforeDelay"/>
     /// </summary>
     [DataField("charges")] public int? Charges;
 
     /// <summary>
-    /// How many times can this action be used before <see cref="UseDelay"/> is activated?
+    ///     How many times can this action be used before <see cref="UseDelay"/> is activated?
+    ///     To have a limited number of actions performed, see <see cref="Charges"/>
     /// </summary>
     [DataField("usesBeforeDelay")] public int UsesBeforeDelay = 1;
 
