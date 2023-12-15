@@ -30,10 +30,15 @@ public abstract class SharedActionsSystem : EntitySystem
     [Dependency] private readonly SharedAudioSystem _audio = default!;
     [Dependency] private readonly SharedTransformSystem _transformSystem = default!;
     [Dependency] private readonly ActionContainerSystem _actionContainer = default!;
+    [Dependency] private readonly MetaDataSystem _metaData = default!;
 
     public override void Initialize()
     {
         base.Initialize();
+
+        SubscribeLocalEvent<InstantActionComponent, MapInitEvent>(OnInit);
+        SubscribeLocalEvent<EntityTargetActionComponent, MapInitEvent>(OnInit);
+        SubscribeLocalEvent<WorldTargetActionComponent, MapInitEvent>(OnInit);
 
         SubscribeLocalEvent<ActionsComponent, DidEquipEvent>(OnDidEquip);
         SubscribeLocalEvent<ActionsComponent, DidEquipHandEvent>(OnHandEquipped);
@@ -54,6 +59,12 @@ public abstract class SharedActionsSystem : EntitySystem
         SubscribeLocalEvent<WorldTargetActionComponent, GetActionDataEvent>(OnGetActionData);
 
         SubscribeAllEvent<RequestPerformActionEvent>(OnActionRequest);
+    }
+
+    private void OnInit(EntityUid uid, BaseActionComponent component, MapInitEvent args)
+    {
+        if (component.Charges != null)
+            component.MaxCharges = component.Charges.Value;
     }
 
     private void OnShutdown(EntityUid uid, ActionsComponent component, ComponentShutdown args)
@@ -165,6 +176,31 @@ public abstract class SharedActionsSystem : EntitySystem
         Dirty(actionId.Value, action);
     }
 
+    public void SetUseDelay(EntityUid? actionId, TimeSpan? delay)
+    {
+        if (!TryGetActionData(actionId, out var action) || action.UseDelay == delay)
+            return;
+
+        action.UseDelay = delay;
+        UpdateAction(actionId, action);
+        Dirty(actionId.Value, action);
+    }
+
+    public void ReduceUseDelay(EntityUid? actionId, TimeSpan? lowerDelay)
+    {
+        if (!TryGetActionData(actionId, out var action))
+            return;
+
+        if (action.UseDelay != null && lowerDelay != null)
+            action.UseDelay = action.UseDelay - lowerDelay;
+
+        if (action.UseDelay < TimeSpan.Zero)
+            action.UseDelay = null;
+
+        UpdateAction(actionId, action);
+        Dirty(actionId.Value, action);
+    }
+
     private void OnRejuventate(EntityUid uid, ActionsComponent component, RejuvenateEvent args)
     {
         foreach (var act in component.Actions)
@@ -226,25 +262,39 @@ public abstract class SharedActionsSystem : EntitySystem
         return action.Charges;
     }
 
-    public void SetUsesBeforeDelay(EntityUid? actionId, int usesBeforeDelay)
+    public void AddCharges(EntityUid? actionId, int addCharges)
     {
-        if (!TryGetActionData(actionId, out var action) || action.UsesBeforeDelay == usesBeforeDelay)
+        if (!TryGetActionData(actionId, out var action) || action.Charges == null || addCharges < 1)
             return;
 
-        action.UsesBeforeDelay = usesBeforeDelay;
+        action.Charges += addCharges;
         UpdateAction(actionId, action);
         Dirty(actionId.Value, action);
     }
 
-    public void SetUseDelay(EntityUid? actionId, TimeSpan? delay)
+    public void RemoveCharges(EntityUid? actionId, int? removeCharges)
     {
-        if (!TryGetActionData(actionId, out var action) ||
-            action.UseDelay == delay)
-        {
+        if (!TryGetActionData(actionId, out var action) || action.Charges == null)
             return;
-        }
 
-        action.UseDelay = delay;
+        if (removeCharges == null)
+            action.Charges = removeCharges;
+        else
+            action.Charges -= removeCharges;
+
+        if (action.Charges is < 0)
+            action.Charges = null;
+
+        UpdateAction(actionId, action);
+        Dirty(actionId.Value, action);
+    }
+
+    public void ResetCharges(EntityUid? actionId)
+    {
+        if (!TryGetActionData(actionId, out var action))
+            return;
+
+        action.Charges = action.MaxCharges;
         UpdateAction(actionId, action);
         Dirty(actionId.Value, action);
     }
@@ -292,11 +342,13 @@ public abstract class SharedActionsSystem : EntitySystem
             return;
 
         var curTime = GameTiming.CurTime;
+        // TODO: Check for charge recovery timer
         if (action.Cooldown.HasValue && action.Cooldown.Value.End > curTime)
             return;
 
-        if (action.RemainingUses < 1)
-            action.RemainingUses = action.UsesBeforeDelay;
+        // TODO: Replace with individual charge recovery when we have the visuals to aid it
+        if (action is { Charges: < 1, RenewCharges: true })
+            ResetCharges(actionEnt);
 
         BaseActionEvent? performEvent = null;
 
@@ -472,8 +524,7 @@ public abstract class SharedActionsSystem : EntitySystem
         {
             dirty = true;
             action.Charges--;
-            if (action.Charges == 0)
-            {
+            if (action is { Charges: 0, RenewCharges: false })
                 action.Enabled = false;
                 action.RemainingUses = 0;
             }
@@ -486,7 +537,7 @@ public abstract class SharedActionsSystem : EntitySystem
         }
 
         action.Cooldown = null;
-        if (action.UseDelay != null && action.RemainingUses < 1)
+        if (action is { UseDelay: not null, Charges: null or < 1 })
         {
             dirty = true;
             action.Cooldown = (curTime, curTime + action.UseDelay.Value);
