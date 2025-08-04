@@ -221,6 +221,19 @@
     event: !type:ToggleClothingEvent
 
 - type: entity
+  parent: BaseAction
+  id: ActionToggleArmorSpacingProtection
+  name: Toggle Armor / Spacing Protection
+  description:
+  components:
+  - type: Action
+    itemIconStyle: BigAction
+    #TODO: icon & IconOn
+    useDelay: 10 # Commit to it
+  - type: InstantAction
+    event: !type:ToggleArmorSpacingProtectionEvent
+
+- type: entity
   parent: BaseMentalAction
   id: ActionCombatModeToggle
   name: "[color=red]Combat Mode[/color]"
@@ -409,12 +422,12 @@
   components:
   - type: Action
     useDelay: 8
-    icon: 
+    icon:
       sprite: Interface/Actions/jump.rsi
       state: icon
   - type: InstantAction
     event: !type:GravityJumpEvent {}
-    
+
 - type: entity
   parent: BaseToggleAction
   id: ActionToggleRootable
