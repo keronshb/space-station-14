@@ -1,4 +1,6 @@
-﻿using Robust.Shared.GameStates;
+﻿using Content.Shared.Inventory;
+using Content.Shared.Whitelist;
+using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared.Actions.Components;
@@ -6,7 +8,7 @@ namespace Content.Shared.Actions.Components;
 /// <summary>
 /// If this is listed on an action, the action will need to meet the listed parameters before it can be used.
 /// </summary>
-[RegisterComponent, NetworkedComponent, Access(typeof(ActionRequirementsSystem))]
+[RegisterComponent, NetworkedComponent, AutoGenerateComponentState, Access(typeof(ActionRequirementsSystem))]
 [EntityCategory("Actions")]
 public sealed partial class ActionRequirementsComponent :  Component
 {
@@ -14,7 +16,16 @@ public sealed partial class ActionRequirementsComponent :  Component
     //      Like how Charges/Cooldown shows, this can update the UI info to add a line that says something like
     //      "Requires Wizard Clothes in Head and Suit slots" or something
 
-    // TODO: List of slot requirements (hand, head, etc)
+    /// <summary>
+    /// Which inventory slots do the <see cref="Requirements"/> apply to?
+    /// Only really applicable if the component/tags listed in <see cref="Requirements"/> is an item
+    /// </summary>
+    [DataField]
+    public SlotFlags? RequiredSlots;
 
-    // TODO: Tag requirements (whitelist?)
+    /// <summary>
+    /// What's required to use this action?
+    /// </summary>
+    [DataField, AutoNetworkedField]
+    public EntityWhitelist? Requirements;
 }
