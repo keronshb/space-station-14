@@ -28,4 +28,10 @@ public sealed partial class ActionRequirementsComponent :  Component
     /// </summary>
     [DataField, AutoNetworkedField]
     public EntityWhitelist? Requirements;
+
+    // TODO: How to signify this works when tile adjacent?
+
+    // TODO: Why not add some sort of event handler like the magic/action system?
+    // Generic check CompEvent, where it checks to see if the action or the performer has the comp & specified value
+    //  before casting?
 }
