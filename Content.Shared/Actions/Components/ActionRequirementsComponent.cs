@@ -12,6 +12,8 @@ namespace Content.Shared.Actions.Components;
 [EntityCategory("Actions")]
 public sealed partial class ActionRequirementsComponent :  Component
 {
+    // TODO: Get the below working first then try expanding after if needed.
+
     // TODO: Display the requirements in the action display
     //      Like how Charges/Cooldown shows, this can update the UI info to add a line that says something like
     //      "Requires Wizard Clothes in Head and Suit slots" or something
@@ -27,14 +29,18 @@ public sealed partial class ActionRequirementsComponent :  Component
     /// </summary>
     [DataField]
     public SlotFlags? RequiredSlots;
+    // SlotFlags.MASK | SlotFlags.HEAD;
+    // - HEAD in yml
 
     /// <summary>
-    /// What's required to use this action?
+    /// What's required to use this action? ex) Is the entity holding/wearing/standing next to something that meets these requirements?
     /// </summary>
     [DataField, AutoNetworkedField]
     public EntityWhitelist? Requirements;
 
     // TODO: How to signify this works when tile adjacent?
+    // maybe a distance field that's a nullable int of some sort?
+    // float distance and use xform.Coords.TryDistance?
 
     // TODO: Why not add some sort of event handler like the magic/action system?
     // Generic check CompEvent, where it checks to see if the action or the performer has the comp & specified value
