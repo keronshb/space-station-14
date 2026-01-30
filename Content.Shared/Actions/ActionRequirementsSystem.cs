@@ -52,11 +52,11 @@ public sealed class ActionRequirementsSystem : EntitySystem
             }
         }
 
-        // TODO: As above need a way to figure out requirements for muted
-        // Could just be more like Requirements.UserHasComponent and then check the whitelist pass
+        // TODO: see if this works with muted comp
+        // TODO: will probably also need to check if hasreqs was already set to false
+        hasReqs = _whitelist.IsWhitelistPass(ent.Comp.Requirements, args.User);
 
         // TODO: Requirement next to (blood puddle, etc)
-
 
         if (hasReqs)
             return;

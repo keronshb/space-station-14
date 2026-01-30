@@ -22,6 +22,12 @@
       prototype: ProjectileFireball
   - type: SpeakOnAction
     sentence: action-speech-spell-fireball
+  - type: ActionRequirements
+    requiredSlots:
+    - OUTERCLOTHING
+    - HEAD
+    requirements:
+      components: [ WizardClothes ]
   - type: ActionUpgrade
     effectedLevels:
       2: ActionFireballII
