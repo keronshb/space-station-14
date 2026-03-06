@@ -5,6 +5,7 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Shared.Actions.Components;
 
+// TODO: Change this to Action Clothes Requirements
 /// <summary>
 /// If this is listed on an action, the action will need to meet the listed parameters before it can be used.
 /// </summary>
